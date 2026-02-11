@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package cfg;
+
+enum AccessFlag {
+    AccessFlag_EMPTY_PLACEHOLDER = 0;
+    AccessFlag_WRITE = 1;
+    AccessFlag_READ = 2;
+    AccessFlag_TRUNCATE = 4;
+    AccessFlag_NEW = 8;
+    AccessFlag_READ_WRITE = 3;
+}
+enum SaleLimitType {
+    SaleLimitType_EMPTY_PLACEHOLDER = 0;
+    SaleLimitType_NoLimit = 1;
+    SaleLimitType_Day = 2;
+    SaleLimitType_Week = 3;
+    SaleLimitType_Month = 4;
+}
+
+message ItemEquipInfo {
+     int32 ID = 1 ;
+     string Name = 2 ;
+     int32 Price = 3 ;
+}
+message ItemSaleInfo {
+     int32 ID = 1 ;
+     SaleLimitType Limit = 2 ;
+     AccessFlag Flag = 3 ;
+     string name = 4 ;
+}
+
+message Sale {
+    repeated ItemSaleInfo data_list = 1 [packed = false];
+}
+message Equip {
+    repeated ItemEquipInfo data_list = 1 [packed = false];
+}
+
+
