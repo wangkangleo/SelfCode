@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Concurrent;
 using System.Text;
+using System.Threading;
 using Luban.DataLoader;
 using Luban.Datas;
 using Luban.DataVisitors;
@@ -37,19 +39,21 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
         return DataUtil.EscapeLuaStringWithQuote(type.Value);
     }
 
-    private int HierarchyCount = 0;
-    private char HierarchyChar = '\t';
+
+    private char hierarchyChar = '\t';
+    private int hierarchyDefault = 2;
 
     public override string Accept(DBean type)
     {
         var x = new StringBuilder();
+        var hierarchyCount = GetHierarchyCount();
         if (type.Type.IsAbstractType)
         {
-            x.Append(HierarchyChar, HierarchyCount).Append($"{{ {FieldNames.LuaTypeNameKey}='{DataUtil.GetImplTypeName(type)}',");
+            x.Append(hierarchyChar, hierarchyCount).Append($"{{ {FieldNames.LuaTypeNameKey}='{DataUtil.GetImplTypeName(type)}',");
         }
         else
         {
-            x.Append(HierarchyChar, HierarchyCount).Append('{').AppendLine();
+            x.Append(hierarchyChar, hierarchyCount).Append('{').AppendLine();
         }
 
         int index = 0;
@@ -60,28 +64,29 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
             {
                 continue;
             }
-            ++HierarchyCount;
-            x.Append(HierarchyChar, HierarchyCount).Append(defField.Name).Append('=');
+            hierarchyCount = AddHierarchyCount();
+            x.Append(hierarchyChar, hierarchyCount).Append(defField.Name).Append('=');
             x.Append(f.Apply(this));
             x.Append(',').AppendLine();
-            --HierarchyCount;
+            hierarchyCount = SubHierarchyCount();
         }
-        x.Append(HierarchyChar, HierarchyCount).Append('}');
+        x.Append(hierarchyChar, hierarchyCount).Append('}');
         return x.ToString();
     }
 
 
     private void Append(List<DType> datas, StringBuilder x)
     {
-        x.AppendLine().Append(HierarchyChar, HierarchyCount).Append('{').AppendLine();
+        var hierarchyCount = GetHierarchyCount();
+        x.AppendLine().Append(hierarchyChar, hierarchyCount).Append('{').AppendLine();
         foreach (var e in datas)
         {
-            ++HierarchyCount;
-            x.Append(HierarchyChar, HierarchyCount).Append(e.Apply(this));
+            hierarchyCount = AddHierarchyCount();
+            x.Append(hierarchyChar, hierarchyCount).Append(e.Apply(this));
             x.Append(',').AppendLine();
-            --HierarchyCount;
+            hierarchyCount = SubHierarchyCount();
         }
-        x.Append(HierarchyChar, HierarchyCount).Append('}');
+        x.Append(hierarchyChar, hierarchyCount).Append('}');
     }
 
     public override string Accept(DArray type)
@@ -108,12 +113,13 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
     public override string Accept(DMap type)
     {
         var x = new StringBuilder();
-        x.AppendLine().Append(HierarchyChar, HierarchyCount).Append('{').AppendLine();
+        var hierarchyCount = GetHierarchyCount();
+        x.AppendLine().Append(hierarchyChar, hierarchyCount).Append('{').AppendLine();
 
         foreach (var e in type.DataMap)
         {
-            ++HierarchyCount;
-            x.Append(HierarchyChar, HierarchyCount).Append('[');
+            hierarchyCount = AddHierarchyCount();
+            x.Append(hierarchyChar, hierarchyCount).Append('[');
             x.Append(e.Key.Apply(this));
             x.Append(']');
             x.Append('=');
@@ -123,9 +129,46 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
             }
             x.Append(e.Value.Apply(this));
             x.Append(',').AppendLine();
-            --HierarchyCount;
+            hierarchyCount = SubHierarchyCount();
         }
-        x.Append(HierarchyChar, HierarchyCount).Append('}');
+        x.Append(hierarchyChar, hierarchyCount).Append('}');
         return x.ToString();
+    }
+
+    private static ConcurrentDictionary<int, int> m_HierarchyCount;
+    public void InitHierarchyCount()
+    {
+        if(m_HierarchyCount == null)
+        {
+            m_HierarchyCount = new ConcurrentDictionary<int, int>();
+        }
+        m_HierarchyCount[Thread.CurrentThread.ManagedThreadId] = hierarchyDefault;
+    }
+    private int GetHierarchyCount()
+    {
+        var thread = Thread.CurrentThread.ManagedThreadId;
+        if(!m_HierarchyCount.ContainsKey(thread))
+        {
+            m_HierarchyCount[thread] = hierarchyDefault;
+        }
+        return m_HierarchyCount[thread];
+    }
+    private int AddHierarchyCount()
+    {
+        var thread = Thread.CurrentThread.ManagedThreadId;
+        if (!m_HierarchyCount.ContainsKey(thread))
+        {
+            m_HierarchyCount[thread] = hierarchyDefault;
+        }
+        return ++m_HierarchyCount[thread];
+    }
+    private int SubHierarchyCount()
+    {
+        var thread = Thread.CurrentThread.ManagedThreadId;
+        if (!m_HierarchyCount.ContainsKey(thread))
+        {
+            m_HierarchyCount[thread] = hierarchyDefault;
+        }
+        return --m_HierarchyCount[thread];
     }
 }

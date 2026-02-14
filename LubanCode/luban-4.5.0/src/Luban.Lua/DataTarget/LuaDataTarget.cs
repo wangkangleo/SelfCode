@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
 using System.Text;
 using Luban.CodeFormat;
 using Luban.Datas;
@@ -105,15 +106,24 @@ public class LuaDataTarget : DataTargetBase
             var map = CreateTableDefaultValue(t, records);
             foreach (var v in map)
             {
-                listDefault.Add(new { name = $"[{v.Key}]", value = v.Value });
+                listDefault.Add(new { name = v.Key, value = v.Value });
             }
 
+            ToLuaCustomVisitor.Ins.InitHierarchyCount();
             List<dynamic> listTable = new List<dynamic>();
             foreach (Record r in records)
             {
                 DBean d = r.Data;
+                int index = 0;
+                List<dynamic> listChildTable = new List<dynamic>();
+                foreach (var f in d.Fields)
+                {
+                    var defField = (DefField)d.ImplType.HierarchyFields[index++];
+                    string keyChildStr = defField.Name;
+                    listChildTable.Add(new { name = keyChildStr, value = f.Apply(ToLuaCustomVisitor.Ins) });
+                }
                 string keyStr = d.GetField(t.Index).Apply(ToLuaCustomVisitor.Ins);
-                listTable.Add(new { name = $"[{keyStr}]", value = d.Apply(ToLuaCustomVisitor.Ins) });
+                listTable.Add(new { name = $"[{keyStr}]", value = listChildTable });
             }
 
 
@@ -128,6 +138,11 @@ public class LuaDataTarget : DataTargetBase
             {
                 { "__default", listDefault},
                 { "__tables", listTable },
+                { "__file", t.FullName },
+                { "__not_equal_default", (Func<string, string, Dictionary<string, string>, bool>)( (str1, str2, dict) =>
+                    {
+                        return IsNotEqualDefault(str1,str2,dict,out var result);
+                    })},
             };
             ctx.PushGlobal(extraEnvs);
             s.Append(template.Render(ctx));
@@ -141,34 +156,52 @@ public class LuaDataTarget : DataTargetBase
         foreach (Record r in records)
         {
             DBean d = r.Data;
-            string keyStr = d.GetField(t.Index).Apply(ToLuaLiteralVisitor.Ins);
-            if (!map.ContainsKey(keyStr))
+            int index = 0;
+            foreach (var f in d.Fields)
             {
-                var value = d.Apply(ToLuaLiteralVisitor.Ins);
-                var value_type = d.TypeName;
-                if (int.TryParse(value,out var int_result))
+                var defField = (DefField)d.ImplType.HierarchyFields[index++];
+                string keyStr = defField.Name;
+                if (!map.ContainsKey(keyStr))
                 {
-                    map.Add(keyStr, default(int).ToString());
-                }
-                else if(float.TryParse(value,out var float_result))
-                {
-                    map.Add(keyStr, default(float).ToString());
-                }
-                else if(bool.TryParse(value,out var bool_result))
-                {
-                    map.Add(keyStr, default(bool).ToString());
-                }
-                else if (value_type == "string")
-                {
-                    map.Add(keyStr, "\"\"");
-                }
-                else
-                {
-                    map.Add(keyStr, "{}");
+                    var value = f.Apply(ToLuaLiteralVisitor.Ins);
+                    var value_type = f.TypeName;
+                    if (int.TryParse(value, out var int_result))
+                    {
+                        map.Add(keyStr, default(int).ToString());
+                    }
+                    else if (float.TryParse(value, out var float_result))
+                    {
+                        map.Add(keyStr, default(float).ToString());
+                    }
+                    else if (bool.TryParse(value, out var bool_result))
+                    {
+                        map.Add(keyStr, default(bool).ToString());
+                    }
+                    else if (value_type == "string")
+                    {
+                        map.Add(keyStr, "\"\"");
+                    }
+                    else
+                    {
+                        map.Add(keyStr, "{}");
+                    }
                 }
             }
-
         }
         return map;
+    }
+
+    public static bool IsNotEqualDefault(string k, string v, Dictionary<string, string> map, out bool result)
+    {
+        if (map.ContainsKey(k))
+        {
+            if (map[k] == v)
+            {
+                result= false;
+                return result;
+            }
+        }
+        result= true;
+        return result;
     }
 }

@@ -10,8 +10,10 @@ ConfigData = ConfigData or {}
 ConfigData.{{__file}}=
 {
 {{for table in __tables}}
-    {{table.name}} = 
-    {{table.value}},
+    {{table.name}}=
+    { {{for tablec in table.value}}
+        {{if "__default[tablec.name]" != "tablec.value"}}{{tablec.name}} = {{tablec.value}},{{ end }}{{ end }}   
+    },
 {{ end }}
 }
 
