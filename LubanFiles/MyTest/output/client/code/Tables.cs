@@ -15,11 +15,13 @@ public partial class Tables
 {
     public Sale Sale {get; }
     public Equip Equip {get; }
+    public Test Test {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
         Sale = new Sale(loader("sale"));
         Equip = new Equip(loader("equip"));
+        Test = new Test(loader("test"));
         ResolveRef();
     }
     
@@ -27,6 +29,7 @@ public partial class Tables
     {
         Sale.ResolveRef(this);
         Equip.ResolveRef(this);
+        Test.ResolveRef(this);
     }
 }
 

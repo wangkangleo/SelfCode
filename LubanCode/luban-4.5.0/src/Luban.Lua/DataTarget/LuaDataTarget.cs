@@ -105,7 +105,7 @@ public class LuaDataTarget : DataTargetBase
             var map = CreateTableDefaultValue(t, records);
             foreach (var v in map)
             {
-                listDefault.Add(new { name = v.Key, value = v.Value });
+                listDefault.Add(new { name = $"[{v.Key}]", value = v.Value });
             }
 
             List<dynamic> listTable = new List<dynamic>();
@@ -113,7 +113,7 @@ public class LuaDataTarget : DataTargetBase
             {
                 DBean d = r.Data;
                 string keyStr = d.GetField(t.Index).Apply(ToLuaCustomVisitor.Ins);
-                listTable.Add(new { name = keyStr, value = d.Apply(ToLuaCustomVisitor.Ins) });
+                listTable.Add(new { name = $"[{keyStr}]", value = d.Apply(ToLuaCustomVisitor.Ins) });
             }
 
 

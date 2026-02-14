@@ -4,7 +4,7 @@ set output_server_proto_path=.\output\server\proto
 set output_server_proto_data_path=.\output\server\protodata
 set output_client_code_path=.\output\client\code
 set output_client_data_path=.\output\client\data
-set output_lua_data_path=.\output\luadata
+set output_lua_data_path=.\output\lua\data
 
 dotnet %LUBAN_DLL% ^
     -t client ^

@@ -29,12 +29,27 @@ message ItemSaleInfo {
      AccessFlag Flag = 3 ;
      string name = 4 ;
 }
+message ItemTestInfo {
+     int32 id_t = 1 ;
+     map<string, int32> y2 = 2 ;
+     map<int32, string> y3 = 3 ;
+     map<int32, ItemEquipInfo> map_t = 4 ;
+    repeated ItemEquipInfo array_t = 5 [packed = false];
+}
+message Type1 {
+     int32 a = 1 ;
+     string b = 2 ;
+     bool c = 3 ;
+}
 
 message Sale {
     repeated ItemSaleInfo data_list = 1 [packed = false];
 }
 message Equip {
     repeated ItemEquipInfo data_list = 1 [packed = false];
+}
+message Test {
+    repeated ItemTestInfo data_list = 1 [packed = false];
 }
 
 
