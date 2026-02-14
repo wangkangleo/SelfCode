@@ -19,10 +19,16 @@
 // SOFTWARE.
 
 using System.Text;
+using Luban.CodeFormat;
 using Luban.Datas;
 using Luban.DataTarget;
 using Luban.Defs;
 using Luban.Lua.DataVisitors;
+using Luban.TemplateExtensions;
+using Luban.Tmpl;
+using Luban.Utils;
+using Scriban;
+using Scriban.Runtime;
 
 namespace Luban.Lua.DataTarget;
 
@@ -87,6 +93,82 @@ public class LuaDataTarget : DataTargetBase
         {
             ExportTableList(table, records, ss);
         }
+        GenerateDataBySchema("lua-data","schema", table, records, ss);
         return CreateOutputFile($"{table.OutputDataFile}.{OutputFileExt}", ss.ToString());
+    }
+
+    private void GenerateDataBySchema(string templateDir, string name, DefTable t, List<Record> records, StringBuilder s)
+    {
+        if (TemplateManager.Ins.TryGetTemplate($"{templateDir}/{name}", out var template))
+        {
+            List<dynamic> listDefault = new List<dynamic>();
+            var map = CreateTableDefaultValue(t, records);
+            foreach (var v in map)
+            {
+                listDefault.Add(new { name = v.Key, value = v.Value });
+            }
+
+            List<dynamic> listTable = new List<dynamic>();
+            foreach (Record r in records)
+            {
+                DBean d = r.Data;
+                string keyStr = d.GetField(t.Index).Apply(ToLuaCustomVisitor.Ins);
+                listTable.Add(new { name = keyStr, value = d.Apply(ToLuaCustomVisitor.Ins) });
+            }
+
+
+            var ctx = new TemplateContext()
+            {
+                LoopLimit = 0,
+                NewLine = "\n",
+            };
+            ctx.PushGlobal(new ContextTemplateExtension());
+            ctx.PushGlobal(new TypeTemplateExtension());
+            var extraEnvs = new ScriptObject
+            {
+                { "__default", listDefault},
+                { "__tables", listTable },
+            };
+            ctx.PushGlobal(extraEnvs);
+            s.Append(template.Render(ctx));
+
+        }
+    }
+
+    private Dictionary<string,string> CreateTableDefaultValue(DefTable t, List<Record> records)
+    {
+        var map = new Dictionary<string, string>();
+        foreach (Record r in records)
+        {
+            DBean d = r.Data;
+            string keyStr = d.GetField(t.Index).Apply(ToLuaLiteralVisitor.Ins);
+            if (!map.ContainsKey(keyStr))
+            {
+                var value = d.Apply(ToLuaLiteralVisitor.Ins);
+                var value_type = d.TypeName;
+                if (int.TryParse(value,out var int_result))
+                {
+                    map.Add(keyStr, default(int).ToString());
+                }
+                else if(float.TryParse(value,out var float_result))
+                {
+                    map.Add(keyStr, default(float).ToString());
+                }
+                else if(bool.TryParse(value,out var bool_result))
+                {
+                    map.Add(keyStr, default(bool).ToString());
+                }
+                else if (value_type == "string")
+                {
+                    map.Add(keyStr, "\"\"");
+                }
+                else
+                {
+                    map.Add(keyStr, "{}");
+                }
+            }
+
+        }
+        return map;
     }
 }

@@ -1,0 +1,23 @@
+local __default_value =
+{
+   {{for table in __default}}
+    {{table.name}} = {{table.value}},
+    {{ end }}
+}
+
+ConfigData = ConfigData or {}
+ConfigData.{{__file}}=
+{
+{{for table in __tables}}
+    {{table.name}} = 
+    {{table.value}},
+{{ end }}
+}
+
+local base = 
+{
+    __index = __default_value
+}
+
+setmetatable(ConfigData.{{__file}},base)
+return ConfigData.{{__file}}
