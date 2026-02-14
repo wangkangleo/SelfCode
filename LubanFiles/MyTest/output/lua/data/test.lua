@@ -25,7 +25,7 @@ ConfigData.Test=
 
     [0]=
     { 
-        id_t = 0,
+        
         y2 = 
 		{
 			["aaa"]=1,
@@ -74,7 +74,7 @@ ConfigData.Test=
 				Name=[["name_3"]],
 				Price=6663,
 			},
-		},   
+		},
     },
 
     [2]=
@@ -130,7 +130,7 @@ ConfigData.Test=
 				Name=[["name_3"]],
 				Price=6663,
 			},
-		},   
+		},
     },
 
     [3]=
@@ -167,7 +167,7 @@ ConfigData.Test=
 				Name=[["name_3"]],
 				Price=6663,
 			},
-		},   
+		},
     },
 
 }

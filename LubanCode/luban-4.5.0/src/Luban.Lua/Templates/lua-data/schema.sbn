@@ -11,8 +11,8 @@ ConfigData.{{__file}}=
 {
 {{for table in __tables}}
     {{table.name}}=
-    { {{for tablec in table.value}}
-        {{if "__default[tablec.name]" != "tablec.value"}}{{tablec.name}} = {{tablec.value}},{{ end }}{{ end }}   
+    { {{for table_c in table.value}}
+        {{for table_d in __default}}{{if table_d.name == table_c.name && table_d.value != table_c.value}}{{table_c.name}} = {{table_c.value}},{{ end }}{{ end }}{{ end }}
     },
 {{ end }}
 }

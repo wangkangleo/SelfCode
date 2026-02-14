@@ -26,7 +26,7 @@ ConfigData.Sale=
         ID = 1,
         Limit = 2,
         Flag = 3,
-        name = "红水晶",   
+        name = "红水晶",
     },
 
     [2]=
@@ -34,7 +34,7 @@ ConfigData.Sale=
         ID = 2,
         Limit = 3,
         Flag = 3,
-        name = "治疗宝珠",   
+        name = "治疗宝珠",
     },
 
     [3]=
@@ -42,7 +42,7 @@ ConfigData.Sale=
         ID = 3,
         Limit = 3,
         Flag = 3,
-        name = "生命药水",   
+        name = "生命药水",
     },
 
 }
