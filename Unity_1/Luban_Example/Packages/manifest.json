@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.code-philosophy.luban": "file:D:/My try/CSharp/UnityNew/LubanFiles/luban_unity-1.1.1",
+    "com.code-philosophy.luban": "file:../../../LubanFiles/luban_unity-1.1.1",
     "com.unity.ai.navigation": "1.1.6",
     "com.unity.collab-proxy": "2.11.2",
     "com.unity.connect.share": "4.2.3",
