@@ -84,7 +84,8 @@ public class LuaDataTarget : DataTargetBase
         var ss = new StringBuilder();
         if (table.IsMapTable)
         {
-            ExportTableMap(table, records, ss);
+            //ExportTableMap(table, records, ss);
+            GenerateDataBySchema("lua-data", "schema", table, records, ss);
         }
         else if (table.IsSingletonTable)
         {
@@ -94,7 +95,7 @@ public class LuaDataTarget : DataTargetBase
         {
             ExportTableList(table, records, ss);
         }
-        GenerateDataBySchema("lua-data","schema", table, records, ss);
+        
         return CreateOutputFile($"{table.OutputDataFile}.{OutputFileExt}", ss.ToString());
     }
 
@@ -109,7 +110,8 @@ public class LuaDataTarget : DataTargetBase
                 listDefault.Add(new { name = v.Key, value = v.Value });
             }
 
-            ToLuaCustomVisitor.Ins.InitHierarchyCount();
+            var visitor = new ToLuaCustomVisitor();
+            visitor.InitHierarchyCount();
             List<dynamic> listTable = new List<dynamic>();
             foreach (Record r in records)
             {
@@ -120,9 +122,9 @@ public class LuaDataTarget : DataTargetBase
                 {
                     var defField = (DefField)d.ImplType.HierarchyFields[index++];
                     string keyChildStr = defField.Name;
-                    listChildTable.Add(new { name = keyChildStr, value = f.Apply(ToLuaCustomVisitor.Ins) });
+                    listChildTable.Add(new { name = keyChildStr, value = f.Apply(visitor) });
                 }
-                string keyStr = d.GetField(t.Index).Apply(ToLuaCustomVisitor.Ins);
+                string keyStr = d.GetField(t.Index).Apply(visitor);
                 listTable.Add(new { name = $"[{keyStr}]", value = listChildTable });
             }
 
@@ -139,10 +141,6 @@ public class LuaDataTarget : DataTargetBase
                 { "__default", listDefault},
                 { "__tables", listTable },
                 { "__file", t.FullName },
-                { "__not_equal_default", (Func<string, string, Dictionary<string, string>, bool>)( (str1, str2, dict) =>
-                    {
-                        return IsNotEqualDefault(str1,str2,dict,out var result);
-                    })},
             };
             ctx.PushGlobal(extraEnvs);
             s.Append(template.Render(ctx));
@@ -189,19 +187,5 @@ public class LuaDataTarget : DataTargetBase
             }
         }
         return map;
-    }
-
-    public static bool IsNotEqualDefault(string k, string v, Dictionary<string, string> map, out bool result)
-    {
-        if (map.ContainsKey(k))
-        {
-            if (map[k] == v)
-            {
-                result= false;
-                return result;
-            }
-        }
-        result= true;
-        return result;
     }
 }

@@ -82,7 +82,11 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
         foreach (var e in datas)
         {
             hierarchyCount = AddHierarchyCount();
-            x.Append(hierarchyChar, hierarchyCount).Append(e.Apply(this));
+            if (e.TypeName != "bean")
+            {
+                x.Append(hierarchyChar, hierarchyCount);
+            }
+            x.Append(e.Apply(this));
             x.Append(',').AppendLine();
             hierarchyCount = SubHierarchyCount();
         }
@@ -135,40 +139,21 @@ public class ToLuaCustomVisitor : ToLiteralVisitorBase
         return x.ToString();
     }
 
-    private static ConcurrentDictionary<int, int> m_HierarchyCount;
+    private int m_iHierarchyCount;
     public void InitHierarchyCount()
     {
-        if(m_HierarchyCount == null)
-        {
-            m_HierarchyCount = new ConcurrentDictionary<int, int>();
-        }
-        m_HierarchyCount[Thread.CurrentThread.ManagedThreadId] = hierarchyDefault;
+        m_iHierarchyCount = hierarchyDefault;
     }
     private int GetHierarchyCount()
     {
-        var thread = Thread.CurrentThread.ManagedThreadId;
-        if(!m_HierarchyCount.ContainsKey(thread))
-        {
-            m_HierarchyCount[thread] = hierarchyDefault;
-        }
-        return m_HierarchyCount[thread];
+        return m_iHierarchyCount;
     }
     private int AddHierarchyCount()
     {
-        var thread = Thread.CurrentThread.ManagedThreadId;
-        if (!m_HierarchyCount.ContainsKey(thread))
-        {
-            m_HierarchyCount[thread] = hierarchyDefault;
-        }
-        return ++m_HierarchyCount[thread];
+        return ++m_iHierarchyCount;
     }
     private int SubHierarchyCount()
     {
-        var thread = Thread.CurrentThread.ManagedThreadId;
-        if (!m_HierarchyCount.ContainsKey(thread))
-        {
-            m_HierarchyCount[thread] = hierarchyDefault;
-        }
-        return --m_HierarchyCount[thread];
+        return --m_iHierarchyCount;
     }
 }
