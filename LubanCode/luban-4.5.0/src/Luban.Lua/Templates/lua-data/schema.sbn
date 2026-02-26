@@ -22,5 +22,5 @@ local base =
     __index = __default_value
 }
 
-setmetatable(ConfigData.{{__file}},base)
+setmetatable(ConfigData.{{__file}},base)--Òª¼ÓÑ­»·
 return ConfigData.{{__file}}
